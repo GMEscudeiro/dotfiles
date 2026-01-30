@@ -191,3 +191,5 @@ bar {
 
 gaps inner 5px
 gaps outer 5px
+
+title_align center
