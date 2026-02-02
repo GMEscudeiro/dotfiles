@@ -189,6 +189,11 @@ gaps inner 5px
 gaps outer 5px
 
 title_align center
+for_window [class="^.*"] border pixel 0
+
 
 exec_always --no-startup-id "bash ~/.config/i3/polybar.sh"
 exec "xrandr --output HDMI-1-0 --auto --primary --output eDP-1 --auto --left-of HDMI-1-0"
+
+bindsym $mod+b exec "firefox"
+exec_always --no-startup-id "picom --backend gdx"
