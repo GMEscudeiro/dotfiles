@@ -189,7 +189,7 @@ gaps inner 5px
 gaps outer 5px
 
 title_align center
-for_window [class="^.*"] border pixel 0
+#for_window [class="^.*"] border pixel 0
 
 
 exec_always --no-startup-id "bash ~/.config/i3/polybar.sh"
