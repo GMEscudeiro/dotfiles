@@ -7,3 +7,8 @@ general.import = [
 
 window.padding = {x=5, y=5}
 window.opacity = 0.8
+
+env.term = "xterm-256color"
+
+[font.normal]
+family = "MesloLGS NF"

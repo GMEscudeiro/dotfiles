@@ -166,10 +166,10 @@ mode "resize" {
         # Pressing right will grow the window’s width.
         # Pressing up will shrink the window’s height.
         # Pressing down will grow the window’s height.
-        bindsym j resize shrink width 10 px or 10 ppt
+        bindsym h resize grow width 10 px or 10 ppt
+        bindsym l resize shrink width 10 px or 10 ppt
+        bindsym j resize shrink height 10 px or 10 ppt
         bindsym k resize grow height 10 px or 10 ppt
-        bindsym l resize shrink height 10 px or 10 ppt
-        bindsym ccedilla resize grow width 10 px or 10 ppt
 
         # same bindings, but for the arrow keys
         bindsym Left resize shrink width 10 px or 10 ppt
@@ -194,7 +194,7 @@ default_border pixel 1
 
 
 exec_always --no-startup-id "bash ~/.config/i3/polybar.sh"
-exec "xrandr --output HDMI-1-0 --auto --primary --output eDP-1 --auto --left-of HDMI-1-0"
+exec "xrandr --output HDMI-1-0 --auto --primary --output eDP-1 --auto --left-of HDMI-1-0 --pos 0x0"
 
 bindsym $mod+b exec "firefox"
 exec_always --no-startup-id "picom --backend gdx"
