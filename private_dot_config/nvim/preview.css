@@ -1,0 +1,17 @@
+/* preview.css */
+body {
+    background-color: #1e1e1e !important; /* Cor de fundo escura */
+    color: #d4d4d4;
+    margin: 0;
+    padding: 20px;
+}
+
+.markdown-body {
+    background-color: transparent !important;
+    max-width: none !important; /* Remove o limite de largura que causa o cinza nas bordas */
+    width: 100%;
+}
+
+svg {
+    background-color: transparent !important;
+}
