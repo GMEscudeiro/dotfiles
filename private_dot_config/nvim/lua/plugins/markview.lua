@@ -35,6 +35,9 @@ return {
       vim.g.mkdp_combine_preview = 0
       vim.g.mkdp_combine_preview_auto_refresh = 1
     end,
+    config = function()
+      vim.keymap.set("n", "<Leader>mp", "<Plug>MarkdownPreview", { desc = "Markdown Preview"})
+    end,
     ft = { "markdown", "mermaid" },
   },
 }
