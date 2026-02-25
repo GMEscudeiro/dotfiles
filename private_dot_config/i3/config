@@ -197,6 +197,7 @@ exec_always --no-startup-id "bash ~/.config/i3/polybar.sh"
 exec "xrandr --output HDMI-1-0 --auto --primary --output eDP-1 --auto --left-of HDMI-1-0 --pos 0x0"
 
 bindsym $mod+b exec "firefox"
+bindsym $mod+Shift+b exec "firefox -private-window"
 exec_always --no-startup-id "picom --backend gdx"
 
 exec "feh --bg-scale ~/Downloads/py1i0j309go61.png"
