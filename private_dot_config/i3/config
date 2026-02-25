@@ -198,3 +198,5 @@ exec "xrandr --output HDMI-1-0 --auto --primary --output eDP-1 --auto --left-of 
 
 bindsym $mod+b exec "firefox"
 exec_always --no-startup-id "picom --backend gdx"
+
+exec "feh --bg-scale ~/Downloads/py1i0j309go61.png"
