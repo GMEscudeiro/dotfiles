@@ -116,16 +116,16 @@ bindsym $mod+a focus parent
 
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
-set $ws1 "1"
-set $ws2 "2"
-set $ws3 "3"
-set $ws4 "4"
-set $ws5 "5"
-set $ws6 "6"
-set $ws7 "7"
-set $ws8 "8"
-set $ws9 "9"
-set $ws10 "10"
+set $ws1 "1: P1"
+set $ws2 "2: P2"
+set $ws3 "3: P3"
+set $ws4 "4: P4"
+set $ws5 "5: P5"
+set $ws6 "6: S1"
+set $ws7 "7: S2"
+set $ws8 "8: S3"
+set $ws9 "9: S4"
+set $ws10 "10: S5"
 
 # switch to workspace
 bindsym $mod+1 workspace number $ws1
@@ -192,9 +192,19 @@ title_align center
 #for_window [class="^.*"] border pixel 0
 default_border pixel 1
 
+workspace $ws1 output HDMI-1-0
+workspace $ws2 output HDMI-1-0
+workspace $ws3 output HDMI-1-0
+workspace $ws4 output HDMI-1-0
+workspace $ws5 output HDMI-1-0
+workspace $ws6 output eDP-1
+workspace $ws7 output eDP-1
+workspace $ws8 output eDP-1
+workspace $ws9 output eDP-1
+workspace $ws10 output eDP-1
 
-exec_always --no-startup-id "bash ~/.config/i3/polybar.sh"
 exec "xrandr --output HDMI-1-0 --auto --primary --output eDP-1 --auto --left-of HDMI-1-0 --pos 0x0"
+exec_always --no-startup-id "bash ~/.config/i3/polybar.sh"
 
 bindsym $mod+b exec "firefox"
 bindsym $mod+Shift+b exec "firefox -private-window"
