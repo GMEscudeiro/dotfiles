@@ -23,5 +23,7 @@ if not pcall(require, "lazy") then
   vim.cmd.quit()
 end
 
+vim.opt.clipboard:append("unnamedplus")
+
 require "lazy_setup"
 require "polish"

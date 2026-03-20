@@ -5,7 +5,9 @@ return {
       "lua",
       "vim",
       "cpp",
-      "javascript"
+      "javascript",
+      "c_sharp",
+      "tsx"
       -- add more arguments for adding more treesitter parsers
     },
   },

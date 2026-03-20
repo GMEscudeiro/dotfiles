@@ -208,6 +208,8 @@ exec_always --no-startup-id "bash ~/.config/i3/polybar.sh"
 
 bindsym $mod+b exec "firefox"
 bindsym $mod+Shift+b exec "firefox -private-window"
-exec_always --no-startup-id "picom --backend gdx"
+exec_always --no-startup-id "picom"
 
-exec "feh --bg-scale ~/Downloads/py1i0j309go61.png"
+exec --no-startup-id "feh --bg-scale ~/Downloads/py1i0j309go61.png"
+
+exec_always --no-startup-id /usr/bin/python3 $HOME/i3-unity-fix/i3unityfix/i3unityfix.py
