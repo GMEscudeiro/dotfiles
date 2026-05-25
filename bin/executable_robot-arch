@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+SESSION="robot-arch"
+ROOT="$HOME/new_robot_architecture"
+
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+    tmux attach -t "$SESSION"
+    exit 0
+fi
+
+tmux new-session  -d -s "$SESSION" -n "server"     -c "$ROOT/server"
+tmux new-window      -t "$SESSION" -n "robot-ws"  -c "$ROOT/robot_ws"
+tmux new-window      -t "$SESSION" -n "contracts"       -c "$ROOT/robot_ws/contracts/"
+tmux new-window      -t "$SESSION" -n "ros2"  -c "$ROOT/robot_ws/ros2_ws"
+tmux new-window      -t "$SESSION" -n "docker"    -c "$ROOT"
+tmux send-keys       -t "$SESSION:docker" "lazydocker" Enter
+tmux new-window      -t "$SESSION" -n "scratch"    -c "$ROOT"
+
+tmux select-window -t "$SESSION:server"
+tmux attach -t "$SESSION"

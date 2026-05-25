@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Requires: fzf  (sudo apt install fzf)
+
+SEARCH_DIRS=(
+    "$HOME/new_robot_architecture/server"
+    "$HOME/new_robot_architecture/robot_ws/modules"
+    "$HOME/new_robot_architecture/robot_ws/ros2_ws/src/socialdroids"
+)
+
+selected=$(find "${SEARCH_DIRS[@]}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null \
+    | fzf --prompt="session > " --preview="ls {}" --height=40%)
+
+[ -z "$selected" ] && exit 0
+
+name=$(basename "$selected" | tr '[:upper:]' '[:lower:]' | tr ' .' '_')
+
+if ! tmux has-session -t "$name" 2>/dev/null; then
+    tmux new-session -ds "$name" -c "$selected"
+fi
+
+if [ -n "$TMUX" ]; then
+    tmux switch-client -t "$name"
+else
+    tmux attach -t "$name"
+fi

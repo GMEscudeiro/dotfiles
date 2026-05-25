@@ -214,3 +214,5 @@ bindsym $mod+Shift+b exec "firefox -private-window"
 exec_always --no-startup-id "picom"
 
 exec --no-startup-id nitrogen --restore
+
+include ~/.config/i3/robot-arch.conf
