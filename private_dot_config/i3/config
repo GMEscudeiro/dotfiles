@@ -195,24 +195,27 @@ title_align center
 #for_window [class="^.*"] border pixel 0
 default_border pixel 1
 
-workspace $ws1 output HDMI-1-0
-workspace $ws2 output HDMI-1-0
-workspace $ws3 output HDMI-1-0
-workspace $ws4 output HDMI-1-0
-workspace $ws5 output HDMI-1-0
-workspace $ws6 output eDP-1
-workspace $ws7 output eDP-1
-workspace $ws8 output eDP-1
-workspace $ws9 output eDP-1
-workspace $ws10 output eDP-1
+# ── Monitores ─────────────────────────────────────────────────────────────────
+exec --no-startup-id ~/.config/i3/monitors/monitor-switch.sh
 
-exec "xrandr --output HDMI-1-0 --auto --primary --output eDP-1 --auto --left-of HDMI-1-0 --pos 0x0"
-exec_always --no-startup-id "bash ~/.config/i3/polybar.sh"
+workspace $ws1  output primary
+workspace $ws2  output primary
+workspace $ws3  output primary
+workspace $ws4  output primary
+workspace $ws5  output primary
+workspace $ws6  output nonprimary
+workspace $ws7  output nonprimary
+workspace $ws8  output nonprimary
+workspace $ws9  output nonprimary
+workspace $ws10 output nonprimary
 
-bindsym $mod+b exec "firefox"
-bindsym $mod+Shift+b exec "firefox -private-window"
-exec_always --no-startup-id "picom"
+bindsym $mod+F7 exec --no-startup-id ~/.config/i3/monitors/monitor-switch.sh
 
+# ── Apps ──────────────────────────────────────────────────────────────────────
 exec --no-startup-id nitrogen --restore
+exec_always --no-startup-id picom
+exec_always --no-startup-id bash ~/.config/i3/polybar.sh
+bindsym $mod+b       exec firefox
+bindsym $mod+Shift+b exec firefox --private-window
 
 include ~/.config/i3/robot-arch.conf
