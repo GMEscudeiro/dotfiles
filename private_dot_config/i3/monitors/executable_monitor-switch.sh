@@ -44,11 +44,32 @@ CMD=$(grep "^${CHOICE}|" "$PROFILES" | cut -d'|' -f2-)
 eval "$CMD"
 echo "$CHOICE" > "$LAST"
 
-# Reagenda workspaces dinamicamente (primary/nonprimary já resolve)
-sleep 0.5
-i3-msg reload
+# ── Redistribui workspaces após xrandr ────────────────────────────────────────
+redistribute_workspaces() {
+  local primary nonprimary
 
-# Reinicia polybar e wallpaper
+  primary=$(xrandr | awk '/ connected primary/ {print $1}')
+  nonprimary=$(xrandr | awk '/ connected/ && !/ primary/ {print $1}' | head -1)
+
+  # Workspaces P → monitor primário
+  for ws in "1: P1" "2: P2" "3: P3" "4: P4" "5: P5"; do
+    i3-msg "[workspace=\"$ws\"] move workspace to output $primary" 2>/dev/null || true
+  done
+
+  # Workspaces S → monitor secundário
+  if [[ -n "$nonprimary" ]]; then
+    for ws in "6: S1" "7: S2" "8: S3" "9: S4" "10: S5"; do
+      i3-msg "[workspace=\"$ws\"] move workspace to output $nonprimary" 2>/dev/null || true
+    done
+  fi
+}
+
+eval "$CMD"
+echo "$CHOICE" > "$LAST"
+
+sleep 0.5
+redistribute_workspaces
+
 pkill polybar 2>/dev/null || true
 sleep 0.3
 bash ~/.config/i3/polybar.sh &

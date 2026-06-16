@@ -1,0 +1,12 @@
+# ~/.xprofile
+PROFILES="$HOME/.config/monitors/profiles.conf"
+LAST="$HOME/.config/monitors/.last_profile"
+
+if [[ -f "$LAST" ]]; then
+  CHOICE=$(cat "$LAST")
+  CMD=$(grep "^${CHOICE}|" "$PROFILES" | cut -d'|' -f2-)
+  [[ -n "$CMD" ]] && eval "$CMD"
+fi
+
+# i3 ainda não subiu aqui, mas quando subir os workspaces
+# vão ser criados já no output certo pelo workspace $ws output primary
