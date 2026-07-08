@@ -209,7 +209,7 @@ workspace $ws8  output nonprimary
 workspace $ws9  output nonprimary
 workspace $ws10 output nonprimary
 
-bindsym $mod+F7 exec --no-startup-id ~/.config/i3/monitors/monitor-switch.sh
+bindsym $mod+F7 exec --no-startup-id ~/.config/i3/monitors/monitor-switch.sh --pick
 
 # ── Apps ──────────────────────────────────────────────────────────────────────
 exec --no-startup-id nitrogen --restore
