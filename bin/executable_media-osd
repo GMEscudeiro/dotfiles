@@ -1,0 +1,391 @@
+#!/usr/bin/env python3
+"""media-osd — OSD de volume/mídia estilo Windows para o i3.
+
+Uso:
+  media-osd up|down|mute     ajusta o volume e mostra o OSD
+  media-osd play|next|prev   controla o player (playerctl) e mostra o OSD
+  media-osd show             só mostra o OSD
+  media-osd daemon           inicia o daemon (substitui um já rodando)
+
+O cliente fala com o daemon por um socket unix; se o daemon não estiver
+rodando, ele é iniciado automaticamente.
+"""
+import os
+import re
+import socket
+import subprocess
+import sys
+import time
+
+SOCK = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "media-osd.sock")
+STEP = 5            # % por tecla
+MAX_VOLUME = 100    # limite ao aumentar
+TIMEOUT_MS = 2000   # tempo visível
+MARGIN_X = 24
+MARGIN_Y = 44       # abaixo da polybar
+ART_SIZE = 72
+
+ENV = {**os.environ, "LC_ALL": "C"}
+
+
+def sh(*cmd):
+    return subprocess.run(cmd, capture_output=True, text=True, env=ENV).stdout.strip()
+
+
+def get_volume():
+    m = re.search(r"(\d+)%", sh("pactl", "get-sink-volume", "@DEFAULT_SINK@"))
+    muted = sh("pactl", "get-sink-mute", "@DEFAULT_SINK@").endswith("yes")
+    return (int(m.group(1)) if m else 0), muted
+
+
+def set_volume(delta):
+    vol, _ = get_volume()
+    vol = max(0, min(MAX_VOLUME, vol + delta))
+    sh("pactl", "set-sink-mute", "@DEFAULT_SINK@", "0")
+    sh("pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{vol}%")
+
+
+ACTIONS = {
+    "up": lambda: set_volume(STEP),
+    "down": lambda: set_volume(-STEP),
+    "mute": lambda: sh("pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"),
+    "play": lambda: sh("playerctl", "play-pause"),
+    "next": lambda: sh("playerctl", "next"),
+    "prev": lambda: sh("playerctl", "previous"),
+    "show": lambda: None,
+}
+
+
+def send(msg):
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    try:
+        s.sendto(msg.encode(), SOCK)
+        return True
+    except OSError:
+        return False
+    finally:
+        s.close()
+
+
+def client(action):
+    ACTIONS[action]()
+    if not send("show"):
+        # inicia via i3 para não herdar confinamento snap/AppArmor do terminal
+        # (senão o playerctl não enxerga players snap como o Spotify)
+        exe = os.path.realpath(__file__)
+        if subprocess.run(["i3-msg", "-q", f"exec --no-startup-id '{exe}' daemon --show"],
+                          capture_output=True).returncode == 0:
+            return
+        subprocess.Popen(
+            [os.path.realpath(__file__), "daemon", "--show"],
+            start_new_session=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+
+# ── daemon ────────────────────────────────────────────────────────────────────
+
+CSS = b"""
+#osd {
+  background-color: rgba(36, 39, 58, 0.88);
+  border: 1px solid rgba(183, 189, 248, 0.25);
+  padding: 12px 16px;
+  color: #cad3f5;
+  font-family: "Fira Code Nerd Font", sans-serif;
+}
+#title { font-weight: bold; font-size: 11pt; }
+#artist { color: #a5adcb; font-size: 10pt; }
+#percent { font-size: 11pt; min-width: 32px; }
+.glyph { font-family: "FiraCode Nerd Font"; font-size: 16pt; }
+#volicon { min-width: 26px; }
+#artfallback { font-size: 34pt; color: #8aadf4; background-color: #363a4f;
+  border-radius: 8px; min-width: 72px; min-height: 72px; }
+#sep { background-color: rgba(202, 211, 245, 0.12); min-height: 1px; }
+progressbar trough {
+  min-height: 6px; min-width: 200px; border-radius: 3px;
+  background-color: #494d64; border: none;
+}
+progressbar progress {
+  min-height: 6px; border-radius: 3px;
+  background-color: #8aadf4; border: none;
+}
+progressbar.muted progress { background-color: #6e738d; }
+button {
+  background: none; border: none; box-shadow: none;
+  color: #cad3f5; padding: 4px 8px; border-radius: 6px;
+}
+button:hover { background-color: rgba(202, 211, 245, 0.12); }
+"""
+
+
+def daemon(show_now):
+    import hashlib
+    import threading
+    import urllib.parse
+    import urllib.request
+
+    import gi
+    gi.require_version("Gtk", "3.0")
+    gi.require_version("Gdk", "3.0")
+    from gi.repository import Gdk, GdkPixbuf, GLib, Gtk
+
+    # substitui um daemon antigo (útil com exec_always / chezmoi apply)
+    if send("quit"):
+        time.sleep(0.2)
+    try:
+        os.unlink(SOCK)
+    except FileNotFoundError:
+        pass
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    sock.bind(SOCK)
+    sock_ino = os.stat(SOCK).st_ino
+
+    cache_dir = os.path.join(
+        os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "media-osd"
+    )
+    os.makedirs(cache_dir, exist_ok=True)
+
+    # glifos da Nerd Font (nf-md-*)
+    G_VOL_HIGH, G_VOL_MED, G_VOL_LOW, G_VOL_MUTE = "\U000f057e", "\U000f0580", "\U000f057f", "\U000f075f"
+    G_PREV, G_PLAY, G_PAUSE, G_NEXT = "\U000f04ae", "\U000f040a", "\U000f03e4", "\U000f04ad"
+    G_MUSIC = "\U000f075a"
+
+    def glyph(text, name=None):
+        lbl = Gtk.Label(label=text)
+        if name:
+            lbl.set_name(name)
+        lbl.get_style_context().add_class("glyph")
+        return lbl
+
+    class OSD(Gtk.Window):
+        def __init__(self):
+            super().__init__(type=Gtk.WindowType.POPUP)
+            self.set_title("media-osd")
+            self.set_wmclass("media-osd", "media-osd")
+            self.set_type_hint(Gdk.WindowTypeHint.NOTIFICATION)
+            visual = self.get_screen().get_rgba_visual()
+            if visual:
+                self.set_visual(visual)
+            self.set_app_paintable(True)
+            self.add_events(
+                Gdk.EventMask.SCROLL_MASK
+                | Gdk.EventMask.ENTER_NOTIFY_MASK
+                | Gdk.EventMask.LEAVE_NOTIFY_MASK
+            )
+            self.connect("scroll-event", self.on_scroll)
+            self.connect("enter-notify-event", lambda *_: self.stop_timer())
+            self.connect("leave-notify-event", self.on_leave)
+
+            self.hide_id = None
+            self.poll_id = None
+            self.hovered = False
+            self.art_url = None
+
+            root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+            root.set_name("osd")
+            self.add(root)
+
+            # volume
+            vol = Gtk.Box(spacing=12)
+            self.vol_icon = glyph(G_VOL_HIGH, "volicon")
+            self.bar = Gtk.ProgressBar(hexpand=True, valign=Gtk.Align.CENTER)
+            self.percent = Gtk.Label(name="percent", xalign=1)
+            vol.pack_start(self.vol_icon, False, False, 0)
+            vol.pack_start(self.bar, True, True, 0)
+            vol.pack_start(self.percent, False, False, 0)
+            root.pack_start(vol, False, False, 0)
+
+            # mídia
+            self.media = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+            self.media.pack_start(Gtk.Box(name="sep"), False, False, 0)
+            row = Gtk.Box(spacing=14)
+            self.art = Gtk.Stack()
+            self.art_img = Gtk.Image()
+            self.art.add_named(glyph(G_MUSIC, "artfallback"), "fallback")
+            self.art.add_named(self.art_img, "img")
+            row.pack_start(self.art, False, False, 0)
+            info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2,
+                           valign=Gtk.Align.CENTER)
+            self.title = Gtk.Label(name="title", xalign=0, max_width_chars=26,
+                                   ellipsize=3)  # Pango.EllipsizeMode.END
+            self.artist = Gtk.Label(name="artist", xalign=0, max_width_chars=28,
+                                    ellipsize=3)
+            info.pack_start(self.title, False, False, 0)
+            info.pack_start(self.artist, False, False, 0)
+            ctl = Gtk.Box(spacing=4, margin_top=6)
+            self.play_btn = None
+            for g, cmd in ((G_PREV, "previous"), (G_PLAY, "play-pause"), (G_NEXT, "next")):
+                b = Gtk.Button()
+                b.add(glyph(g))
+                b.connect("clicked", self.on_player, cmd)
+                ctl.pack_start(b, False, False, 0)
+                if cmd == "play-pause":
+                    self.play_btn = b
+            info.pack_start(ctl, False, False, 0)
+            row.pack_start(info, True, True, 0)
+            self.media.pack_start(row, False, False, 0)
+            root.pack_start(self.media, False, False, 0)
+
+            root.show_all()
+            self.media.set_no_show_all(True)
+
+        # ── estado ──
+        def refresh(self):
+            vol, muted = get_volume()
+            self.bar.set_fraction(min(vol, 100) / 100)
+            self.percent.set_text(str(vol))
+            ctx = self.bar.get_style_context()
+            (ctx.add_class if muted else ctx.remove_class)("muted")
+            if muted or vol == 0:
+                g = G_VOL_MUTE
+            elif vol < 34:
+                g = G_VOL_LOW
+            elif vol < 67:
+                g = G_VOL_MED
+            else:
+                g = G_VOL_HIGH
+            self.vol_icon.set_text(g)
+
+            meta = sh("playerctl", "metadata", "--format",
+                      "{{status}}\n{{title}}\n{{artist}}\n{{mpris:artUrl}}")
+            parts = meta.split("\n") if meta else []
+            if len(parts) < 4 or parts[0] == "Stopped":
+                self.media.hide()
+            else:
+                status, title, artist, art = parts[:4]
+                self.title.set_text(title or "Sem título")
+                self.artist.set_text(artist)
+                self.play_btn.get_child().set_text(
+                    G_PAUSE if status == "Playing" else G_PLAY)
+                self.set_art(art)
+                self.media.show_all()
+            self.resize(1, 1)
+            return True
+
+        def set_art(self, url):
+            if url == self.art_url:
+                return
+            self.art_url = url
+            self.art.set_visible_child_name("fallback")
+            if not url:
+                return
+            if url.startswith("file://"):
+                self.load_art(urllib.parse.unquote(url[7:]), url)
+            elif url.startswith("http"):
+                path = os.path.join(cache_dir, hashlib.sha1(url.encode()).hexdigest())
+                if os.path.exists(path):
+                    self.load_art(path, url)
+                else:
+                    threading.Thread(target=self.fetch_art, args=(url, path),
+                                     daemon=True).start()
+
+        def fetch_art(self, url, path):
+            try:
+                urllib.request.urlretrieve(url, path)
+            except Exception:
+                return
+            GLib.idle_add(self.load_art, path, url)
+
+        def load_art(self, path, url):
+            if url != self.art_url:
+                return False
+            try:
+                pb = GdkPixbuf.Pixbuf.new_from_file_at_scale(path, ART_SIZE, ART_SIZE, True)
+                self.art_img.set_from_pixbuf(pb)
+                self.art.set_visible_child_name("img")
+            except GLib.Error:
+                pass
+            return False
+
+        # ── visibilidade ──
+        def popup(self):
+            self.refresh()
+            display = Gdk.Display.get_default()
+            _, x, y = display.get_default_seat().get_pointer().get_position()
+            geo = display.get_monitor_at_point(x, y).get_geometry()
+            self.move(geo.x + MARGIN_X, geo.y + MARGIN_Y)
+            self.show()
+            if self.poll_id is None:
+                # metadados mudam de forma assíncrona depois de next/prev
+                self.poll_id = GLib.timeout_add(500, self.refresh)
+            if not self.hovered:
+                self.start_timer()
+
+        def start_timer(self):
+            self.stop_timer(hovered=False)
+            self.hide_id = GLib.timeout_add(TIMEOUT_MS, self.on_timeout)
+
+        def stop_timer(self, hovered=True):
+            self.hovered = hovered
+            if self.hide_id:
+                GLib.source_remove(self.hide_id)
+                self.hide_id = None
+
+        def on_timeout(self):
+            self.hide_id = None
+            self.hide()
+            if self.poll_id:
+                GLib.source_remove(self.poll_id)
+                self.poll_id = None
+            return False
+
+        def on_leave(self, _w, event):
+            # ignora leave causado por entrar num widget filho
+            if event.detail != Gdk.NotifyType.INFERIOR:
+                self.start_timer()
+
+        def on_scroll(self, _w, event):
+            if event.direction == Gdk.ScrollDirection.UP:
+                set_volume(STEP)
+            elif event.direction == Gdk.ScrollDirection.DOWN:
+                set_volume(-STEP)
+            elif event.direction == Gdk.ScrollDirection.SMOOTH:
+                _, _, dy = event.get_scroll_deltas()
+                if dy:
+                    set_volume(STEP if dy < 0 else -STEP)
+            self.refresh()
+
+        def on_player(self, _b, cmd):
+            sh("playerctl", cmd)
+            GLib.timeout_add(150, lambda: self.refresh() and False)
+
+    provider = Gtk.CssProvider()
+    provider.load_from_data(CSS)
+    Gtk.StyleContext.add_provider_for_screen(
+        Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+    )
+
+    osd = OSD()
+
+    def on_msg(_src, _cond):
+        msg = sock.recv(64).decode(errors="ignore")
+        if msg == "show":
+            osd.popup()
+        elif msg == "quit":
+            Gtk.main_quit()
+        return True
+
+    GLib.io_add_watch(sock.fileno(), GLib.PRIORITY_DEFAULT, GLib.IO_IN, on_msg)
+    if show_now:
+        GLib.idle_add(lambda: osd.popup() and False)
+    try:
+        Gtk.main()
+    finally:
+        sock.close()
+        try:
+            if os.stat(SOCK).st_ino == sock_ino:
+                os.unlink(SOCK)
+        except OSError:
+            pass
+
+
+if __name__ == "__main__":
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "show"
+    if cmd == "daemon":
+        daemon("--show" in sys.argv)
+    elif cmd in ACTIONS:
+        client(cmd)
+    else:
+        sys.exit(__doc__)
