@@ -1,0 +1,4 @@
+{{- /* override do .desktop só onde o Spotify é snap */ -}}
+{{ if not (stat "/snap/spotify") }}
+.local/share/applications/spotify_spotify.desktop
+{{ end }}
