@@ -47,7 +47,12 @@ check_ubuntu() {
 
 # ── Variáveis configuráveis ───────────────────────────────────────────────────
 CHEZMOI_REPO="${CHEZMOI_REPO:-}"           # ex: https://github.com/user/dotfiles
-NVIM_VERSION="${NVIM_VERSION:-v0.11.0}"    # versão do Neovim (AppImage)
+NVIM_VERSION="${NVIM_VERSION:-v0.12.5}"    # versão do Neovim (AppImage) — nvim-treesitter (main) exige >= 0.12
+TREESITTER_VERSION="${TREESITTER_VERSION:-0.27.0}"  # tree-sitter-cli (>= 0.26.1), compilado via cargo
+POLYBAR_VERSION="${POLYBAR_VERSION:-3.7.2}" # config usa internal/tray e config.ini (>= 3.7)
+# Keyring do repositório i3 (https://i3wm.org/docs/repositories.html)
+I3_KEYRING_DEB="${I3_KEYRING_DEB:-sur5r-keyring_2025.12.14_all.deb}"
+I3_KEYRING_SHA256="${I3_KEYRING_SHA256:-2c816fbd12ea4d84811818aed0ce3a5da589be1afa30833eb32abc1e4fe6349e}"
 GO_VERSION="${GO_VERSION:-1.22.4}"         # versão do Go (para atuin se necessário)
 
 LOG_FILE="$HOME/bootstrap_$(date +%Y%m%d_%H%M%S).log"
@@ -119,6 +124,20 @@ fi
 section "3/10 · i3wm · Picom · Polybar · Rofi · Alacritty"
 
 # ── i3 ────────────────────────────────────────────────────────────────────────
+# O i3 do apt do Ubuntu 22.04 é antigo; usa o repositório oficial do i3wm
+if [[ ! -f /etc/apt/sources.list.d/sur5r-i3.list ]]; then
+  log "Adicionando repositório oficial do i3wm..."
+  tmp=$(mktemp -d)
+  /usr/lib/apt/apt-helper download-file \
+    "https://debian.sur5r.net/i3/pool/main/s/sur5r-keyring/${I3_KEYRING_DEB}" \
+    "$tmp/keyring.deb" "SHA256:${I3_KEYRING_SHA256}"
+  sudo apt-get install -y -qq "$tmp/keyring.deb"
+  echo "deb [signed-by=/usr/share/keyrings/sur5r-keyring.gpg] http://debian.sur5r.net/i3/ $(grep '^VERSION_CODENAME=' /etc/os-release | cut -f2 -d=) universe" \
+    | sudo tee /etc/apt/sources.list.d/sur5r-i3.list >/dev/null
+  sudo apt-get update -qq
+  ok "Repositório do i3wm adicionado."
+fi
+
 log "Instalando i3..."
 sudo apt-get install -y -qq \
   i3 i3status i3lock xss-lock \
@@ -152,24 +171,30 @@ sudo apt-get install -y -qq picom || {
 }
 
 # ── Polybar ───────────────────────────────────────────────────────────────────
-log "Instalando Polybar..."
-sudo apt-get install -y -qq polybar || {
-  warn "polybar não disponível via apt, compilando do fonte..."
+# O apt do Ubuntu 22.04 traz a 3.5.7, que não lê config.ini nem tem internal/tray
+INSTALLED_POLYBAR="$(polybar --version 2>/dev/null | head -1 | awk '{print $2}' || true)"
+if [[ "$INSTALLED_POLYBAR" == "$POLYBAR_VERSION" ]]; then
+  ok "Polybar $POLYBAR_VERSION já instalado."
+else
+  log "Compilando Polybar $POLYBAR_VERSION do fonte (instalado: ${INSTALLED_POLYBAR:-nenhum})..."
+  sudo apt-get remove -y -qq polybar 2>/dev/null || true
   sudo apt-get install -y -qq \
     cmake cmake-data pkg-config python3-sphinx python3-packaging \
     libcairo2-dev libxcb1-dev libxcb-util0-dev libxcb-randr0-dev \
     libxcb-composite0-dev python3-xcbgen xcb-proto libxcb-image0-dev \
     libxcb-ewmh-dev libxcb-icccm4-dev libxcb-xkb-dev libxcb-xrm-dev \
     libxcb-cursor-dev libasound2-dev libpulse-dev libnl-genl-3-dev \
-    libmpdclient-dev libuv1-dev libjsoncpp-dev
+    libmpdclient-dev libuv1-dev libjsoncpp-dev libcurl4-openssl-dev i3-wm
   tmp=$(mktemp -d)
-  git clone --recursive --depth=1 https://github.com/polybar/polybar "$tmp/polybar"
-  mkdir "$tmp/polybar/build"
-  cmake -S "$tmp/polybar" -B "$tmp/polybar/build" -DCMAKE_BUILD_TYPE=Release
-  make -C "$tmp/polybar/build" -j"$(nproc)"
-  sudo make -C "$tmp/polybar/build" install
-  ok "Polybar compilado e instalado."
-}
+  curl -fsSL "https://github.com/polybar/polybar/releases/download/${POLYBAR_VERSION}/polybar-${POLYBAR_VERSION}.tar.gz" \
+    | tar -xz -C "$tmp"
+  src="$tmp/polybar-${POLYBAR_VERSION}"
+  cmake -S "$src" -B "$src/build" -DCMAKE_BUILD_TYPE=Release
+  make -C "$src/build" -j"$(nproc)"
+  sudo make -C "$src/build" install
+  hash -r
+  ok "Polybar $(polybar --version | head -1) compilado e instalado."
+fi
 
 # ── Rofi ──────────────────────────────────────────────────────────────────────
 log "Instalando Rofi..."
@@ -331,14 +356,17 @@ fi
 if ! command -v nvim &>/dev/null || [[ "$(nvim --version | head -1 | awk '{print $2}')" != "$NVIM_VERSION" ]]; then
   log "Baixando Neovim $NVIM_VERSION (AppImage)..."
   NVIM_URL="https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux-x86_64.appimage"
-  curl -fsSL "$NVIM_URL" -o /tmp/nvim.appimage
-  chmod +x /tmp/nvim.appimage
+  tmp=$(mktemp -d)
+  curl -fsSL "$NVIM_URL" -o "$tmp/nvim.appimage"
+  chmod +x "$tmp/nvim.appimage"
 
   # Extrai AppImage (evita problemas com FUSE em containers/VMs)
-  /tmp/nvim.appimage --appimage-extract &>/dev/null
-  sudo mv squashfs-root /opt/nvim
+  (cd "$tmp" && ./nvim.appimage --appimage-extract &>/dev/null)
+  sudo rm -rf /opt/nvim
+  sudo mv "$tmp/squashfs-root" /opt/nvim
   sudo ln -sf /opt/nvim/usr/bin/nvim /usr/local/bin/nvim
-  rm -f /tmp/nvim.appimage
+  rm -rf "$tmp"
+  hash -r
   ok "Neovim $(nvim --version | head -1) instalado."
 fi
 
@@ -391,6 +419,16 @@ fi
 
 # Carrega cargo no PATH desta sessão
 [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+
+# tree-sitter-cli (nvim-treesitter main compila os parsers com ele).
+# O binário pronto do GitHub exige glibc 2.39 (o 22.04 tem 2.35), então compila via cargo.
+if [[ "$(tree-sitter --version 2>/dev/null | awk '{print $2}')" == "$TREESITTER_VERSION" ]]; then
+  ok "tree-sitter-cli $TREESITTER_VERSION já instalado."
+else
+  log "Compilando tree-sitter-cli $TREESITTER_VERSION via cargo..."
+  cargo install --locked tree-sitter-cli --version "$TREESITTER_VERSION"
+  ok "tree-sitter-cli instalado."
+fi
 
 # =============================================================================
 # 8. ATUIN
