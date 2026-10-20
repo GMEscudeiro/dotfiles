@@ -1,0 +1,40 @@
+# Notificações, Catppuccin Macchiato (cores de github.com/catppuccin/dunst)
+[global]
+    # dunst 1.5 (apt do 22.04): geometry em vez de width/offset/origin
+    monitor = 0
+    follow = mouse
+    geometry = "360x5-12+36"
+    shrink = yes
+    padding = 10
+    horizontal_padding = 12
+    separator_height = 2
+    frame_width = 2
+    corner_radius = 10
+    font = JetBrainsMono Nerd Font 10
+    markup = full
+    format = "<b>%s</b>\n%b"
+    icon_position = left
+    max_icon_size = 48
+    icon_path = /usr/share/icons/Papirus-Dark/48x48/status/:/usr/share/icons/Papirus-Dark/48x48/apps/:/usr/share/icons/Papirus-Dark/48x48/devices/
+    mouse_left_click = do_action, close_current
+    mouse_right_click = close_all
+
+    frame_color = "#8aadf4"
+    separator_color = frame
+    highlight = "#8aadf4"
+
+[urgency_low]
+    background = "#24273a"
+    foreground = "#cad3f5"
+    timeout = 4
+
+[urgency_normal]
+    background = "#24273a"
+    foreground = "#cad3f5"
+    timeout = 6
+
+[urgency_critical]
+    background = "#24273a"
+    foreground = "#cad3f5"
+    frame_color = "#f5a97f"
+    timeout = 0

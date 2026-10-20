@@ -12,9 +12,9 @@ if type "xrandr"; then
   for m in $(xrandr --query | grep " connected" | cut -d" " -f1); do
     is_primary=$(xrandr --query | grep "$m" | grep "primary")
     if [ ! -z "$is_primary" ]; then
-      MONITOR=$m polybar --reload pbar &
+      MONITOR=$m polybar --reload --config=/home/gui/.config/polybar/config.ini pbar &
     else
-      MONITOR=$m polybar --reload sbar &
+      MONITOR=$m polybar --reload --config=/home/gui/.config/polybar/config.ini sbar &
     fi
   done
 else

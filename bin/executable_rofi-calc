@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Calculadora no rofi (qalc): digita e Enter calcula; Enter no resultado copia.
+res=""
+while true; do
+    input=$(printf '%s' "$res" | rofi -dmenu -p "calc" ${res:+-mesg "= $res   (Enter copia)"})
+    [[ -z "$input" ]] && exit 0
+    if [[ -n "$res" && "$input" == "$res" ]]; then
+        printf '%s' "$res" | xclip -selection clipboard
+        exit 0
+    fi
+    res=$(qalc -t -- "$input" 2>&1)
+done

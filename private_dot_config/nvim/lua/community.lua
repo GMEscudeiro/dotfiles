@@ -13,5 +13,12 @@ return {
   { import = "astrocommunity.pack.docker" },
   { import = "astrocommunity.pack.yaml" }, -- launch files, params
   { import = "astrocommunity.pack.json" },
+  { import = "astrocommunity.pack.rust" },
+  { import = "astrocommunity.pack.cmake" }, -- CMakeLists do ROS 2
+  { import = "astrocommunity.pack.markdown" },
+  -- Ferramentas
+  { import = "astrocommunity.git.diffview-nvim" }, -- :DiffviewOpen, histórico de arquivo
+  { import = "astrocommunity.motion.flash-nvim" }, -- s / S: pula pra qualquer lugar visível
+  { import = "astrocommunity.code-runner.overseer-nvim" }, -- tasks (colcon, testes) → quickfix
   -- import/override with your plugins folder
 }

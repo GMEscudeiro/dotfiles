@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Pós-apply do tema/fonte: cache de fontes, temas do bat/delta e gsettings (apps GNOME).
+# externals: {{ include ".chezmoiexternal.toml" | sha256sum }}
+# gtk:       {{ include "private_dot_config/gtk-3.0/settings.ini" | sha256sum }}
+set -euo pipefail
+
+fc-cache -f "$HOME/.local/share/fonts" >/dev/null
+
+export PATH="$HOME/.local/share/mise/shims:$HOME/.local/bin:$PATH"
+if command -v bat &>/dev/null; then
+  bat cache --build >/dev/null
+fi
+
+if command -v gsettings &>/dev/null; then
+  gsettings set org.gnome.desktop.interface gtk-theme "catppuccin-macchiato-mauve-standard+default" || true
+  gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark" || true
+  gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" || true
+fi

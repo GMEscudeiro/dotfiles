@@ -69,15 +69,22 @@ redistribute_workspaces() {
   primary=$(xrandr | awk '/ connected primary/ {print $1}')
   nonprimary=$(xrandr | awk '/ connected/ && !/ primary/ {print $1}' | head -1)
 
-  for ws in "1: P1" "2: P2" "3: P3" "4: P4" "5: P5"; do
-    i3-msg "[workspace=\"$ws\"] move workspace to output $primary" 2>/dev/null || true
-  done
+  # [workspace=...] casa janelas, não workspaces — workspaces vazios (ex: os
+  # criados no boot) nunca seriam movidos. Por isso foca cada um e move.
+  local focused ws target
+  focused=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused).name')
 
-  if [[ -n "$nonprimary" ]]; then
-    for ws in "6: S1" "7: S2" "8: S3" "9: S4" "10: S5"; do
-      i3-msg "[workspace=\"$ws\"] move workspace to output $nonprimary" 2>/dev/null || true
-    done
-  fi
+  while IFS= read -r ws; do
+    case "$ws" in
+      *": P"*) target=$primary ;;
+      *": S"*) target=$nonprimary ;;
+      *) continue ;;
+    esac
+    [[ -z "$target" ]] && continue
+    i3-msg "workspace --no-auto-back-and-forth \"$ws\"; move workspace to output $target" >/dev/null 2>&1 || true
+  done < <(i3-msg -t get_workspaces | jq -r '.[].name')
+
+  [[ -n "$focused" ]] && i3-msg "workspace --no-auto-back-and-forth \"$focused\"" >/dev/null 2>&1
 }
 
 sleep 0.5

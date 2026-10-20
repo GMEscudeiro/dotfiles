@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Bloqueia a tela: betterlockscreen se o i3lock-color estiver instalado, senão i3lock puro.
+# Fica em primeiro plano (o xss-lock --transfer-sleep-lock precisa disso).
+if command -v betterlockscreen &>/dev/null && i3lock --version 2>&1 | grep -q color; then
+    exec betterlockscreen --lock dimblur
+fi
+exec i3lock --nofork -c 181926

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Reboots straight into Windows, bypassing the GRUB menu.
+# Requires: efibootmgr (sudo apt install efibootmgr) + UEFI boot mode.
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+    exec sudo "$0" "$@"
+fi
+
+entry=$(efibootmgr | grep -i "Windows Boot Manager" | head -n1 || true)
+
+if [[ -z "$entry" ]]; then
+    echo "Não encontrei uma entrada 'Windows Boot Manager' no efibootmgr." >&2
+    echo "Rode 'sudo efibootmgr' e confira o nome exato da entrada." >&2
+    exit 1
+fi
+
+bootnum=$(sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\).*/\1/p' <<<"$entry")
+
+echo "Entrada encontrada: $entry"
+echo "Definindo BootNext=$bootnum e reiniciando..."
+
+efibootmgr --bootnext "$bootnum" >/dev/null
+
+reboot

@@ -2,9 +2,9 @@
 # Requires: fzf  (sudo apt install fzf)
 
 SEARCH_DIRS=(
-    "$HOME/new_robot_architecture/server"
-    "$HOME/new_robot_architecture/robot_ws/modules"
-    "$HOME/new_robot_architecture/robot_ws/ros2_ws/src/socialdroids"
+    "$HOME/socialdroids/server_ws"
+    "$HOME/socialdroids/robot_ws/modules"
+    "$HOME/socialdroids/robot_ws/ros2_ws/src/socialdroids"
 )
 
 selected=$(find "${SEARCH_DIRS[@]}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null \

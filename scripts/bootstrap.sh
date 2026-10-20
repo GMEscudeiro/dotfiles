@@ -428,6 +428,8 @@ EXTRA_TOOLS=(
   feh imagemagick
   # misc
   ranger trash-cli
+  # desktop: notificações, luz noturna, calculadora do rofi, ícones
+  dunst gammastep qalc papirus-icon-theme
 )
 
 log "Instalando ferramentas extras..."
@@ -437,6 +439,21 @@ for tool in "${EXTRA_TOOLS[@]}"; do
     && ok "$tool instalado." \
     || warn "$tool não encontrado no apt, pulando."
 done
+
+# i3lock-color (betterlockscreen precisa dele; substitui o i3lock do apt)
+if ! i3lock --version 2>&1 | grep -q color; then
+  log "Compilando i3lock-color..."
+  sudo apt-get install -y -qq autoconf gcc make pkg-config libpam0g-dev libcairo2-dev \
+    libfontconfig1-dev libxcb-composite0-dev libev-dev libx11-xcb-dev libxcb-xkb-dev \
+    libxcb-xinerama0-dev libxcb-randr0-dev libxcb-image0-dev libxcb-util0-dev \
+    libxcb-xrm-dev libxkbcommon-dev libxkbcommon-x11-dev libjpeg-dev libgif-dev \
+    bc x11-xserver-utils x11-utils
+  tmp=$(mktemp -d)
+  git clone -q --depth 1 --branch 2.13.c.5 https://github.com/Raymo111/i3lock-color.git "$tmp/i3lock-color"
+  (cd "$tmp/i3lock-color" && ./install-i3lock-color.sh)
+  rm -rf "$tmp"
+  ok "i3lock-color instalado."
+fi
 
 # zoxide (o do apt do 22.04 é muito antigo)
 if ! command -v zoxide &>/dev/null; then

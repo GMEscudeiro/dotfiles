@@ -1,3 +1,10 @@
+# Alacritty (snap) vaza variáveis de ambiente do sandbox para o shell
+if [[ "$GIO_MODULE_DIR" == *snap/alacritty* ]]; then
+  unset GIO_MODULE_DIR
+fi
+if [[ "$LD_LIBRARY_PATH" == /snap/alacritty/* ]]; then
+  unset LD_LIBRARY_PATH
+fi
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -38,7 +45,8 @@ command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
 eval "$(atuin init zsh)"
 
 # ── Aliases ───────────────────────────────────────────────────────────────────
-alias cat='batcat'
+# bat do mise (tema Catppuccin em ~/.config/bat); batcat do apt como fallback
+if command -v bat &>/dev/null; then alias cat='bat'; else alias cat='batcat'; fi
 alias rm='trash'
 
 if command -v eza &>/dev/null; then

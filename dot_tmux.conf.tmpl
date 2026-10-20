@@ -41,19 +41,35 @@ set-window-option -g mode-keys vi
 bind | split-window -h -c "#{pane_current_path}"
 bind - split-window -v -c "#{pane_current_path}"
 
-# Vim-like pane navigation
+# Pane navigation (Glove80/Enthium: h t n s = mesma posição das setas da Cursor layer)
 bind h select-pane -L
-bind j select-pane -D
-bind k select-pane -U
-bind l select-pane -R
+bind t select-pane -U
+bind n select-pane -D
+bind s select-pane -R
+
+# Sem prefixo: segura Space (Cursor layer) + Alt (anelar esq.) + setas
+bind -n M-Left  select-pane -L
+bind -n M-Up    select-pane -U
+bind -n M-Down  select-pane -D
+bind -n M-Right select-pane -R
+
+# Janela anterior/próxima sem prefixo (sugestão do sunaku): Alt (anelar dir.) + , .
+bind -n M-, previous-window
+bind -n M-. next-window
+
+# 's' (choose-tree) virou navegação; lista de sessões vai pro S
+bind S choose-tree -Zs
 
 # Claude Code em popup persistente (um por diretório); mesma tecla abre e fecha
 bind a if-shell -F '#{m:claude-*,#{session_name}}' \
     'detach-client' \
     'display-popup -E -w 90% -h 90% -d "#{pane_current_path}" ~/bin/tmux-claude'
 
-# Sessionizer (requires fzf)
-bind C-f run-shell "tmux neww ~/bin/tmux-sessionizer"
+# Sessões: sesh + fzf em popup (~/bin/tmux-sesh). display-popup e não run-shell:
+# o run-shell não tem tty nem TMUX_PANE, e o fzf sai na hora.
+bind C-f display-popup -E -w 80% -h 70% "~/bin/tmux-sesh"
+# sesh connect fecha o popup e troca; sair da sessão volta pra anterior em vez de largar o tmux
+set -g detach-on-destroy off
 
 # Notas: sessão "notes" no vault com o nvim aberto
 bind N run-shell "tmux has-session -t notes 2>/dev/null || tmux new-session -ds notes -c {{ .notesDir }} nvim; tmux switch-client -t notes"
@@ -63,3 +79,15 @@ bind N run-shell "tmux has-session -t notes 2>/dev/null || tmux new-session -ds 
 run ~/.config/tmux/plugins/tmux-battery/battery.tmux
 {{- end }}
 run ~/.config/tmux/plugins/tmux-cpu/cpu.tmux
+
+# Sessões sobrevivem a reboot: resurrect salva/restaura (prefix C-w / C-r; o C-s padrão é o send-prefix),
+# continuum salva a cada 15 min e restaura ao iniciar o tmux.
+# continuum por último: ele se pendura no status-right.
+set -g @resurrect-save 'C-w'
+set -g @resurrect-restore 'C-r'
+set -g @resurrect-capture-pane-contents 'on'
+set -g @resurrect-strategy-nvim 'session'
+set -g @continuum-restore 'on'
+set -g @continuum-save-interval '15'
+run ~/.config/tmux/plugins/tmux-resurrect/resurrect.tmux
+run ~/.config/tmux/plugins/tmux-continuum/continuum.tmux

@@ -43,3 +43,47 @@
     stripComponents = 1
     exact = true
     refreshPeriod = "168h"
+
+[".config/tmux/plugins/tmux-resurrect"]
+    type = "archive"
+    url = "https://github.com/tmux-plugins/tmux-resurrect/archive/master.tar.gz"
+    stripComponents = 1
+    exact = true
+    refreshPeriod = "168h"
+
+[".config/tmux/plugins/tmux-continuum"]
+    type = "archive"
+    url = "https://github.com/tmux-plugins/tmux-continuum/archive/master.tar.gz"
+    stripComponents = 1
+    exact = true
+    refreshPeriod = "168h"
+
+# ── Tema Catppuccin Macchiato ─────────────────────────────────────────────────
+# bat e delta (o run_onchange roda `bat cache --build`)
+[".config/bat/themes/Catppuccin Macchiato.tmTheme"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Macchiato.tmTheme"
+    refreshPeriod = "720h"
+
+[".config/btop/themes/catppuccin_macchiato.theme"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_macchiato.theme"
+    refreshPeriod = "720h"
+
+# GTK (o repo foi arquivado; v1.0.3 é a release final)
+[".themes"]
+    type = "archive"
+    url = "https://github.com/catppuccin/gtk/releases/download/v1.0.3/catppuccin-macchiato-mauve-standard+default.zip"
+    include = ["catppuccin-macchiato-mauve-standard+default", "catppuccin-macchiato-mauve-standard+default/**"]
+
+# ── Fonte ─────────────────────────────────────────────────────────────────────
+[".local/share/fonts/JetBrainsMono"]
+    type = "archive"
+    url = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/JetBrainsMono.tar.xz"
+    include = ["*.ttf"]
+
+# ── Lock screen (precisa do i3lock-color; ver scripts/bootstrap.sh) ───────────
+[".local/bin/betterlockscreen"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/betterlockscreen/betterlockscreen/v4.4.0/betterlockscreen"
+    executable = true

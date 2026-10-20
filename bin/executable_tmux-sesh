@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Seletor de sessões do tmux (sesh + fzf). Roda dentro do display-popup do prefix C-f.
+# Ctrl-f busca nos workspaces do socialdroids (o que o tmux-sessionizer fazia).
+export PATH="$HOME/.local/share/mise/shims:$HOME/.local/bin:$PATH"
+
+SEARCH_DIRS=(
+    "$HOME/socialdroids/server_ws"
+    "$HOME/socialdroids/robot_ws/modules"
+    "$HOME/socialdroids/robot_ws/ros2_ws/src/socialdroids"
+)
+find_cmd="fd -t d -d 1 . ${SEARCH_DIRS[*]}"
+
+selected=$(sesh list --icons | fzf \
+    --no-sort --ansi --prompt '⚡  ' \
+    --header '  ^a tudo ^t tmux ^x zoxide ^f socialdroids ^d mata sessão' \
+    --bind 'tab:down,btab:up' \
+    --bind 'ctrl-a:change-prompt(⚡  )+reload(sesh list --icons)' \
+    --bind 'ctrl-t:change-prompt(🪟  )+reload(sesh list -t --icons)' \
+    --bind 'ctrl-x:change-prompt(📁  )+reload(sesh list -z --icons)' \
+    --bind "ctrl-f:change-prompt(🔎  )+reload($find_cmd)" \
+    --bind 'ctrl-d:execute(tmux kill-session -t {2..})+change-prompt(⚡  )+reload(sesh list --icons)' \
+    --preview-window 'right:55%' \
+    --preview 'sesh preview {}')
+
+[ -z "$selected" ] && exit 0
+sesh connect "$selected"

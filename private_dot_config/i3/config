@@ -15,7 +15,7 @@ set $mod Mod4
 
 # Font for window titles. Will also be used by the bar unless a different font
 # is used in the bar {} block below.
-font pango:monospace 8
+font pango:JetBrainsMono Nerd Font 9
 
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
@@ -30,7 +30,7 @@ exec --no-startup-id dex --autostart --environment i3
 
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend. Use loginctl lock-session to lock your screen.
-exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
+exec --no-startup-id xss-lock --transfer-sleep-lock -- ~/bin/lock
 
 # NetworkManager is the most popular way to manage wireless networks on Linux,
 # and nm-applet is a desktop environment-independent system tray GUI for it.
@@ -69,11 +69,11 @@ bindsym $mod+d exec --no-startup-id "rofi -show drun"
 # .desktop file. It is a wrapper around dmenu, so you need that installed.
 # bindcode $mod+40 exec --no-startup-id i3-dmenu-desktop
 
-# change focus
+# change focus (Glove80/Enthium: h t n s = mesma posição das setas da Cursor layer)
 bindsym $mod+h focus left
-bindsym $mod+j focus down
-bindsym $mod+k focus up
-bindsym $mod+l focus right
+bindsym $mod+t focus up
+bindsym $mod+n focus down
+bindsym $mod+s focus right
 
 # alternatively, you can use the cursor keys:
 bindsym $mod+Left focus left
@@ -83,9 +83,9 @@ bindsym $mod+Right focus right
 
 # move focused window
 bindsym $mod+Shift+h move left
-bindsym $mod+Shift+j move down
-bindsym $mod+Shift+k move up
-bindsym $mod+Shift+l move right
+bindsym $mod+Shift+t move up
+bindsym $mod+Shift+n move down
+bindsym $mod+Shift+s move right
 
 # alternatively, you can use the cursor keys:
 bindsym $mod+Shift+Left move left
@@ -93,17 +93,17 @@ bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
-# split in horizontal orientation
-bindsym $mod+n split h
+# split in horizontal orientation (| lado a lado, igual ao tmux)
+bindsym $mod+backslash split h
 
-# split in vertical orientation
-bindsym $mod+m split v
+# split in vertical orientation (- empilhado, igual ao tmux)
+bindsym $mod+minus split v
 
 # enter fullscreen mode for the focused container
 bindsym $mod+f fullscreen toggle
 
 # change container layout (stacked, tabbed, toggle split)
-bindsym $mod+s layout stacking
+bindsym $mod+Shift+w layout stacking
 bindsym $mod+w layout tabbed
 bindsym $mod+e layout toggle split
 
@@ -174,10 +174,10 @@ mode "resize" {
         # Pressing right will grow the window’s width.
         # Pressing up will shrink the window’s height.
         # Pressing down will grow the window’s height.
-        bindsym h resize grow width 10 px or 10 ppt
-        bindsym l resize shrink width 10 px or 10 ppt
-        bindsym j resize shrink height 10 px or 10 ppt
-        bindsym k resize grow height 10 px or 10 ppt
+        bindsym h resize shrink width 10 px or 10 ppt
+        bindsym t resize shrink height 10 px or 10 ppt
+        bindsym n resize grow height 10 px or 10 ppt
+        bindsym s resize grow width 10 px or 10 ppt
 
         # same bindings, but for the arrow keys
         bindsym Left resize shrink width 10 px or 10 ppt
@@ -215,6 +215,7 @@ workspace $ws9  output nonprimary
 workspace $ws10 output nonprimary
 
 bindsym $mod+F7 exec --no-startup-id ~/.config/i3/monitors/monitor-switch.sh --pick
+bindsym $mod+p  exec --no-startup-id ~/.config/i3/monitors/monitor-switch.sh --pick
 
 # ── Apps ──────────────────────────────────────────────────────────────────────
 exec --no-startup-id nitrogen --restore
@@ -224,6 +225,31 @@ bindsym $mod+b       exec firefox
 bindsym $mod+Shift+b exec firefox --private-window
 
 include ~/.config/i3/robot-arch.conf
+
+# ── Desktop ───────────────────────────────────────────────────────────────────
+# Ferramentas do mise (pypi/github) ficam nos shims
+set $shims ~/.local/share/mise/shims
+
+# Notificações (tema em ~/.config/dunst/dunstrc)
+exec --no-startup-id dunst
+# Luz quente à noite (horários em ~/.config/gammastep/config.ini)
+exec --no-startup-id gammastep
+# Alterna split h/v sozinho pela proporção da janela; morre no restart, por isso exec_always
+exec_always --no-startup-id $shims/autotiling
+
+# rofi: emoji e calculadora
+bindsym $mod+period exec --no-startup-id $shims/rofimoji --action copy
+bindsym $mod+c      exec --no-startup-id ~/bin/rofi-calc
+
+# Layout dos workspaces: $mod+o, depois s salva / r restaura o workspace atual
+set $mode_resurrect "resurrect: [s]alvar  [r]estaurar"
+mode $mode_resurrect {
+        bindsym s exec --no-startup-id $shims/i3-resurrect save, mode "default"
+        bindsym r exec --no-startup-id $shims/i3-resurrect restore, mode "default"
+        bindsym Escape mode "default"
+        bindsym Return mode "default"
+}
+bindsym $mod+o mode $mode_resurrect
 
 # Media Player Controls (using playerctl)
 exec_always --no-startup-id ~/bin/media-osd daemon

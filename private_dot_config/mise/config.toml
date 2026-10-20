@@ -1,15 +1,28 @@
 # Ferramentas globais (sem sudo); `mise install` roda sozinho no chezmoi apply quando este arquivo muda
 [tools]
 node = "24"
+uv = "latest"         # backend dos pacotes pypi: abaixo
 
 # CLI
 delta = "latest"      # diff do git
 eza = "latest"        # ls
+bat = "latest"        # cat (o batcat do apt é antigo e não lê o cache de temas do delta)
 btop = "latest"       # monitor de sistema
 gh = "latest"         # GitHub CLI
 tealdeer = "latest"   # tldr
+ripgrep = "latest"    # grep (telescope)
+fd = "latest"         # find (telescope, sesh)
+fzf = "latest"        # fuzzy finder (telescope, sesh)
+lazydocker = "latest" # TUI do docker
+dust = "latest"       # du
+duf = "latest"        # df
+xh = "latest"         # cliente HTTP
+"github:joshmedeski/sesh" = "latest"  # sessões do tmux (prefix C-f)
 # gerenciador de arquivos; build musl porque o gnu exige glibc 2.39 (o 22.04 tem 2.35)
 "github:sxyazi/yazi" = { version = "latest", asset_pattern = "yazi-x86_64-unknown-linux-musl.zip" }
 
 # Desktop
 "github:erebe/greenclip" = "latest"  # histórico do clipboard (rofi)
+"pypi:autotiling" = "latest"         # alterna split h/v sozinho no i3
+"pypi:i3-resurrect" = "latest"       # salva/restaura layout dos workspaces ($mod+o)
+"pypi:rofimoji" = "latest"           # seletor de emoji ($mod+period)
