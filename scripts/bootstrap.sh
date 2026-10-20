@@ -53,7 +53,6 @@ POLYBAR_VERSION="${POLYBAR_VERSION:-3.7.2}" # config usa internal/tray e config.
 # Keyring do repositório i3 (https://i3wm.org/docs/repositories.html)
 I3_KEYRING_DEB="${I3_KEYRING_DEB:-sur5r-keyring_2025.12.14_all.deb}"
 I3_KEYRING_SHA256="${I3_KEYRING_SHA256:-2c816fbd12ea4d84811818aed0ce3a5da589be1afa30833eb32abc1e4fe6349e}"
-GO_VERSION="${GO_VERSION:-1.22.4}"         # versão do Go (para atuin se necessário)
 
 LOG_FILE="$HOME/bootstrap_$(date +%Y%m%d_%H%M%S).log"
 
@@ -104,7 +103,7 @@ BASE_DEPS=(
   fonts-font-awesome fonts-noto-color-emoji
 
   # misc
-  fd-find ripgrep fzf bat jq htop tree stow
+  fd-find ripgrep fzf bat jq htop tree
 )
 
 log "Instalando dependências base (${#BASE_DEPS[@]} pacotes)..."
@@ -265,24 +264,7 @@ else
   ok "Powerlevel10k já instalado."
 fi
 
-# Plugins zsh úteis
-ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-ZSH_PLUGINS=(
-  "zsh-users/zsh-autosuggestions"
-  "zsh-users/zsh-syntax-highlighting"
-  "zsh-users/zsh-completions"
-)
-for plugin_repo in "${ZSH_PLUGINS[@]}"; do
-  plugin_name="${plugin_repo##*/}"
-  plugin_dir="$ZSH_CUSTOM/plugins/$plugin_name"
-  if [[ ! -d "$plugin_dir" ]]; then
-    log "Instalando plugin zsh: $plugin_name..."
-    git clone --depth=1 "https://github.com/$plugin_repo" "$plugin_dir"
-    ok "$plugin_name instalado."
-  else
-    ok "$plugin_name já instalado."
-  fi
-done
+# Plugins zsh (autosuggestions, syntax-highlighting, completions) vêm do .chezmoiexternal.toml
 
 # Fontes MesloLGS (necessárias para p10k)
 log "Instalando fontes MesloLGS NF para Powerlevel10k..."
@@ -305,35 +287,14 @@ ok "Fontes MesloLGS instaladas."
 # =============================================================================
 # 5. TMUX + TMUX PLUGIN MANAGER + SESSIONIZER
 # =============================================================================
-section "5/10 · Tmux · TPM · Tmux-Sessionizer"
+section "5/10 · Tmux"
 
 log "Instalando Tmux..."
 sudo apt-get install -y -qq tmux
 ok "Tmux $(tmux -V) instalado."
 
-# TPM
-TPM_DIR="$HOME/.tmux/plugins/tpm"
-if [[ ! -d "$TPM_DIR" ]]; then
-  log "Instalando Tmux Plugin Manager (TPM)..."
-  git clone --depth=1 https://github.com/tmux-plugins/tpm "$TPM_DIR"
-  ok "TPM instalado."
-else
-  ok "TPM já instalado."
-fi
-
-# tmux-sessionizer (ThePrimeagen)
-SESSIONIZER_BIN="$HOME/.local/bin/tmux-sessionizer"
-if [[ ! -f "$SESSIONIZER_BIN" ]]; then
-  log "Instalando tmux-sessionizer..."
-  mkdir -p "$HOME/.local/bin"
-  curl -fsSL \
-    "https://raw.githubusercontent.com/ThePrimeagen/tmux-sessionizer/master/tmux-sessionizer" \
-    -o "$SESSIONIZER_BIN"
-  chmod +x "$SESSIONIZER_BIN"
-  ok "tmux-sessionizer instalado em $SESSIONIZER_BIN."
-else
-  ok "tmux-sessionizer já instalado."
-fi
+# Plugins do tmux (catppuccin, battery, cpu) vêm do .chezmoiexternal.toml
+# tmux-sessionizer é o ~/bin/tmux-sessionizer versionado no chezmoi
 
 # =============================================================================
 # 6. NEOVIM
@@ -374,15 +335,20 @@ fi
 log "Instalando dependências para Neovim (Node, Python, Lua)..."
 sudo apt-get install -y -qq python3-pip python3-venv luarocks
 
-# Node.js via nvm
+# mise (gerenciador de versões: Node, Go, Python...)
+if ! command -v mise &>/dev/null; then
+  log "Instalando mise..."
+  curl -fsSL https://mise.run | sh
+  ok "mise instalado."
+fi
+export PATH="$HOME/.local/bin:$PATH"
+eval "$(mise activate bash)"
+
 if ! command -v node &>/dev/null; then
-  log "Instalando Node.js via nvm..."
-  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
-  export NVM_DIR="$HOME/.nvm"
-  # shellcheck disable=SC1091
-  source "$NVM_DIR/nvm.sh"
-  nvm install --lts
-  ok "Node.js $(node --version) instalado via nvm."
+  log "Instalando Node.js via mise..."
+  mise use -g node@24   # mesma versão do private_dot_config/mise/config.toml
+  hash -r
+  ok "Node.js $(node --version) instalado via mise."
 else
   ok "Node.js já instalado: $(node --version)."
 fi
@@ -392,8 +358,7 @@ if command -v npm &>/dev/null; then
   log "Instalando LSP servers via npm..."
   npm install -g \
     neovim \
-    pyright \
-    typescript typescript-language-server \
+    typescript \
     bash-language-server \
     prettier \
     @fsouza/prettierd \
@@ -473,6 +438,13 @@ for tool in "${EXTRA_TOOLS[@]}"; do
     || warn "$tool não encontrado no apt, pulando."
 done
 
+# zoxide (o do apt do 22.04 é muito antigo)
+if ! command -v zoxide &>/dev/null; then
+  log "Instalando zoxide..."
+  curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+  ok "zoxide instalado."
+fi
+
 # lazygit via release binário se não veio pelo apt
 if ! command -v lazygit &>/dev/null; then
   log "Instalando lazygit manualmente..."
@@ -550,7 +522,7 @@ done
 echo ""
 echo -e "${YELLOW}${BOLD}Próximos passos:${NC}"
 echo -e "  1. Faça logout e login para o shell mudar para zsh"
-echo -e "  2. Abra o tmux e pressione ${BOLD}prefix + I${NC} para instalar plugins (TPM)"
+echo -e "  2. Configure uma chave SSH no GitHub e rode ${BOLD}notes-sync${NC} para clonar as notas"
 echo -e "  3. Abra o nvim — os plugins serão instalados automaticamente"
 echo -e "  4. Configure o Atuin: ${BOLD}atuin login${NC} (se usar sync)"
 echo -e "  5. Revise o i3 config e ajuste monitores com ${BOLD}arandr${NC}"

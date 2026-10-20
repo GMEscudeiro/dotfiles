@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Abre (ou reanexa) uma sessão tmux com o Claude Code para o diretório atual
+# (o display-popup -d já entra no pane_current_path da aba de origem).
+# Pensado para rodar dentro de um display-popup: fechar o popup só desanexa,
+# o Claude continua vivo em background.
+DIR="$PWD"
+NAME="claude-$(basename "$DIR" | tr '.:' '__')"
+
+unset TMUX
+exec tmux new-session -A -s "$NAME" -c "$DIR" claude

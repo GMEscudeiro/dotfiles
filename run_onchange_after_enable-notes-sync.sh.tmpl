@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Habilita o timer de sync das notas; roda de novo quando as units mudam.
+# notes-sync.service: {{ include "private_dot_config/systemd/user/notes-sync.service" | sha256sum }}
+# notes-sync.timer:   {{ include "private_dot_config/systemd/user/notes-sync.timer" | sha256sum }}
+set -euo pipefail
+
+systemctl --user daemon-reload
+systemctl --user enable --now notes-sync.timer

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Instala as ferramentas do mise quando a lista muda.
+# config.toml: {{ include "private_dot_config/mise/config.toml" | sha256sum }}
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$PATH"
+command -v mise &>/dev/null || curl -fsSL https://mise.run | sh
+mise install --yes

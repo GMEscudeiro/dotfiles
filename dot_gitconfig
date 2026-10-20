@@ -1,0 +1,17 @@
+[user]
+	name = GMEscudeiro
+	email = guimescudeiro@gmail.com
+
+# delta: diff com cores, números de linha e syntax highlight (instalado via mise)
+[core]
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	line-numbers = true
+	syntax-theme = Catppuccin Macchiato
+[merge]
+	conflictstyle = diff3
+[diff]
+	colorMoved = default

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Sincroniza o vault de notas com o GitHub: commit do que mudou, pull --rebase, push.
+# Roda pelo timer systemd (notes-sync.timer) e pode ser chamado à mão.
+set -euo pipefail
+
+VAULT="${NOTES_DIR:-{{ .notesDir }}}"
+REPO="{{ .notesRepo }}"
+
+notify() { command -v notify-send &>/dev/null && notify-send -u critical "notes-sync" "$1" || true; }
+
+if [[ ! -d "$VAULT/.git" ]]; then
+  git clone "$REPO" "$VAULT"
+  exit 0
+fi
+
+cd "$VAULT"
+
+# Não mexe se houver rebase/merge pendente (conflito antigo não resolvido)
+if [[ -d .git/rebase-merge || -d .git/rebase-apply || -f .git/MERGE_HEAD ]]; then
+  notify "Conflito pendente em $VAULT — resolva à mão."
+  exit 1
+fi
+
+git add -A
+if ! git diff --cached --quiet; then
+  git commit -q -m "vault backup: $(date '+%Y-%m-%d %H:%M:%S') ($(hostname))"
+fi
+
+if ! git pull -q --rebase --autostash; then
+  git rebase --abort 2>/dev/null || true
+  notify "Conflito ao sincronizar $VAULT — resolva à mão."
+  exit 1
+fi
+
+git push -q

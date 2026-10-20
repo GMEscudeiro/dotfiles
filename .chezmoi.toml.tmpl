@@ -1,0 +1,9 @@
+{{- /* Dados por máquina, detectados no `chezmoi init` (rode de novo se o hardware mudar) */ -}}
+{{- $laptop := stat "/sys/class/power_supply/BAT0" | not | not -}}
+[edit]
+    command = "nvim"
+
+[data]
+    laptop = {{ $laptop }}
+    notesDir = "{{ .chezmoi.homeDir }}/obsidian-notes"
+    notesRepo = "git@github.com:GMEscudeiro/obsidian-notes.git"

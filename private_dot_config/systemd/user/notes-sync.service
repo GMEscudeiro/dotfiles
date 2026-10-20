@@ -1,0 +1,7 @@
+[Unit]
+Description=Sincroniza o vault de notas com o git
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/bin/notes-sync

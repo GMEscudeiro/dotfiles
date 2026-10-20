@@ -1,4 +1,7 @@
 # ~/.xprofile
+
+# Ferramentas do mise (greenclip, gh...) visíveis para programas abertos pelo i3/rofi
+export PATH="$HOME/.local/share/mise/shims:$HOME/.local/bin:$PATH"
 PROFILES="$HOME/.config/monitors/profiles.conf"
 LAST="$HOME/.config/monitors/.last_profile"
 

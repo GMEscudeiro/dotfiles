@@ -11,6 +11,8 @@ tmux new-session  -d -s "$SESSION" -n "server"     -c "$ROOT/server"
 tmux new-window      -t "$SESSION" -n "robot-ws"  -c "$ROOT/robot_ws"
 tmux new-window      -t "$SESSION" -n "contracts"       -c "$ROOT/robot_ws/contracts/"
 tmux new-window      -t "$SESSION" -n "ros2"  -c "$ROOT/robot_ws/ros2_ws"
+tmux new-window      -t "$SESSION" -n "docs"  -c "$ROOT/robot-platform-docs"
+tmux new-window      -t "$SESSION" -n "supervisor"  -c "$ROOT/sd_supervisor"
 tmux new-window      -t "$SESSION" -n "docker"    -c "$ROOT"
 tmux send-keys       -t "$SESSION:docker" "lazydocker" Enter
 tmux new-window      -t "$SESSION" -n "scratch"    -c "$ROOT"
