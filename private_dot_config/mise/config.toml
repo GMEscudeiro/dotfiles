@@ -12,4 +12,7 @@ tealdeer = "latest"   # tldr
 "github:sxyazi/yazi" = { version = "latest", asset_pattern = "yazi-x86_64-unknown-linux-musl.zip" }
 
 # Desktop
+uv = "latest"                        # backend dos pacotes pipx: abaixo
+"pipx:rofimoji" = "latest"           # seletor de emoji no rofi
+"pipx:autotiling" = "latest"         # split automático no i3
 "github:erebe/greenclip" = "latest"  # histórico do clipboard (rofi)

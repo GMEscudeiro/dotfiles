@@ -43,3 +43,10 @@
     stripComponents = 1
     exact = true
     refreshPeriod = "168h"
+
+# ── desktop ───────────────────────────────────────────────────────────────────
+# Usa o ~/.local/bin/i3lock-color compilado pelo bootstrap
+["bin/betterlockscreen"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/betterlockscreen/betterlockscreen/v4.4.0/betterlockscreen"
+    executable = true

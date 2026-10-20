@@ -24,7 +24,7 @@ confirm() {
 choice=$(printf '%s\n' "${options[@]}" | rofi_menu "Energia" "${#options[@]}") || exit 0
 
 case "$choice" in
-    "$lock")     i3lock -c 181926 ;;
+    "$lock")     ~/bin/betterlockscreen --lock ;;
     "$logout")   confirm "Sair do i3" && i3-msg exit ;;
     "$suspend")  systemctl suspend ;;
     "$reboot")   confirm "Reiniciar" && systemctl reboot ;;

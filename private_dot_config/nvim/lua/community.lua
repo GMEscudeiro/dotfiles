@@ -13,5 +13,12 @@ return {
   { import = "astrocommunity.pack.docker" },
   { import = "astrocommunity.pack.yaml" }, -- launch files, params
   { import = "astrocommunity.pack.json" },
+  -- Plugins
+  { import = "astrocommunity.git.diffview-nvim" }, -- diffs, histórico e conflitos
+  { import = "astrocommunity.motion.flash-nvim" }, -- s/S: saltos
+  { import = "astrocommunity.search.grug-far-nvim" }, -- <Leader>s: buscar e substituir
+  { import = "astrocommunity.diagnostics.trouble-nvim" }, -- <Leader>x: lista de erros
+  { import = "astrocommunity.code-runner.overseer-nvim" }, -- <Leader>M: tasks
+  { import = "astrocommunity.file-explorer.oil-nvim" }, -- <Leader>O: pastas como buffer
   -- import/override with your plugins folder
 }

@@ -428,6 +428,8 @@ EXTRA_TOOLS=(
   feh imagemagick
   # misc
   ranger trash-cli
+  # desktop: luz noturna, automount, calculadora (rofi-calc usa o qalc)
+  gammastep udiskie qalc
 )
 
 log "Instalando ferramentas extras..."
@@ -437,6 +439,35 @@ for tool in "${EXTRA_TOOLS[@]}"; do
     && ok "$tool instalado." \
     || warn "$tool não encontrado no apt, pulando."
 done
+
+# rofi-calc: a v2.1.0 é a última que compila com o rofi 1.7.1 do 22.04
+if [[ ! -f "$HOME/.local/lib/rofi/calc.so" ]]; then
+  log "Compilando rofi-calc..."
+  sudo apt-get install -y -qq rofi-dev libtool autoconf automake
+  tmp=$(mktemp -d)
+  curl -fsSL https://github.com/svenstaro/rofi-calc/archive/refs/tags/v2.1.0.tar.gz | tar -xz -C "$tmp" --strip-components=1
+  (cd "$tmp" && autoreconf -i && mkdir build && cd build && ../configure && make)
+  mkdir -p "$HOME/.local/lib/rofi"
+  cp "$tmp/build/.libs/calc.so" "$HOME/.local/lib/rofi/"
+  ok "rofi-calc instalado em ~/.local/lib/rofi."
+fi
+
+# i3lock-color (usado pelo betterlockscreen); instalado como i3lock-color, sem sobrepor o i3lock
+I3LOCK_COLOR_VERSION="2.13.c.5"
+if ! command -v i3lock-color &>/dev/null; then
+  log "Compilando i3lock-color $I3LOCK_COLOR_VERSION..."
+  sudo apt-get install -y -qq autoconf gcc make pkg-config libpam0g-dev libcairo2-dev \
+    libfontconfig1-dev libxcb-composite0-dev libev-dev libx11-xcb-dev libxcb-xkb-dev \
+    libxcb-xinerama0-dev libxcb-randr0-dev libxcb-image0-dev libxcb-util0-dev libxcb-xrm-dev \
+    libxkbcommon-dev libxkbcommon-x11-dev libjpeg-dev libgif-dev feh
+  tmp=$(mktemp -d)
+  curl -fsSL "https://github.com/Raymo111/i3lock-color/archive/refs/tags/${I3LOCK_COLOR_VERSION}.tar.gz" \
+    | tar -xz -C "$tmp" --strip-components=1
+  (cd "$tmp" && autoreconf -fi && mkdir build && cd build \
+    && ../configure --sysconfdir=/etc --disable-sanitizers && make -j"$(nproc)")
+  install -Dm755 "$tmp/build/i3lock" "$HOME/.local/bin/i3lock-color"
+  ok "i3lock-color instalado em ~/.local/bin."
+fi
 
 # zoxide (o do apt do 22.04 é muito antigo)
 if ! command -v zoxide &>/dev/null; then
@@ -526,6 +557,7 @@ echo -e "  2. Configure uma chave SSH no GitHub e rode ${BOLD}notes-sync${NC} pa
 echo -e "  3. Abra o nvim — os plugins serão instalados automaticamente"
 echo -e "  4. Configure o Atuin: ${BOLD}atuin login${NC} (se usar sync)"
 echo -e "  5. Revise o i3 config e ajuste monitores com ${BOLD}arandr${NC}"
+echo -e "  6. Gere o cache da tela de bloqueio: ${BOLD}betterlockscreen -u <wallpaper>${NC}"
 echo ""
 echo -e "${CYAN}Log completo em: $LOG_FILE${NC}"
 echo ""

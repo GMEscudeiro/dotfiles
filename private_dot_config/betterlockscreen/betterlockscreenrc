@@ -1,0 +1,29 @@
+# Catppuccin Macchiato. Gerar o cache da imagem: betterlockscreen -u <wallpaper>
+fx_list=(dimblur)
+dim_level=40
+blur_level=1
+quiet=true
+
+font="MesloLGS NF"
+locktext=""
+loginbox=24273acc
+loginshadow=00000000
+ringcolor=8aadf4ff
+insidecolor=00000000
+separatorcolor=00000000
+ringvercolor=a6da95ff
+insidevercolor=00000000
+ringwrongcolor=ed8796ff
+insidewrongcolor=00000000
+keyhlcolor=c6a0f6ff
+bshlcolor=f5a97fff
+timecolor=cad3f5ff
+greetercolor=cad3f5ff
+layoutcolor=cad3f5ff
+verifcolor=cad3f5ff
+wrongcolor=ed8796ff
+modifcolor=ed8796ff
+veriftext="Verificando..."
+wrongtext="Senha errada"
+time_format="%H:%M"
+bgcolor=24273aff

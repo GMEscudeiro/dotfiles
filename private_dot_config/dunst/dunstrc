@@ -1,0 +1,43 @@
+# Catppuccin Macchiato — compatível com dunst 1.5 (Ubuntu 22.04)
+[global]
+    monitor = 0
+    follow = keyboard
+    geometry = "350x5-15+40"
+    padding = 12
+    horizontal_padding = 14
+    frame_width = 2
+    corner_radius = 8
+    separator_height = 2
+    separator_color = frame
+    frame_color = "#8aadf4"
+    font = MesloLGS NF 10
+    markup = full
+    format = "<b>%s</b>\n%b"
+    alignment = left
+    word_wrap = yes
+    icon_position = left
+    max_icon_size = 48
+    icon_path = /usr/share/icons/Humanity/status/48/:/usr/share/icons/Humanity/devices/48/:/usr/share/icons/Humanity/apps/48/
+    show_age_threshold = 60
+    idle_threshold = 120
+    sticky_history = yes
+    history_length = 20
+    mouse_left_click = do_action, close_current
+    mouse_middle_click = close_all
+    mouse_right_click = close_current
+
+[urgency_low]
+    background = "#24273a"
+    foreground = "#cad3f5"
+    timeout = 5
+
+[urgency_normal]
+    background = "#24273a"
+    foreground = "#cad3f5"
+    timeout = 8
+
+[urgency_critical]
+    background = "#24273a"
+    foreground = "#cad3f5"
+    frame_color = "#f5a97f"
+    timeout = 0
