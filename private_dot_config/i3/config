@@ -198,7 +198,9 @@ gaps outer 5px
 
 title_align center
 #for_window [class="^.*"] border pixel 0
-default_border pixel 1
+# Sem borda: o picom arredonda os cantos (raio 6) e a borda fina ficava cortada na curva
+default_border pixel 0
+default_floating_border pixel 0
 
 # ── Monitores ─────────────────────────────────────────────────────────────────
 exec --no-startup-id ~/.config/i3/monitors/monitor-switch.sh
