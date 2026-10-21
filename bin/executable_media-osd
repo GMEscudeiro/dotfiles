@@ -3,7 +3,7 @@
 
 Uso:
   media-osd up|down|mute     ajusta o volume e mostra o OSD
-  media-osd play|next|prev   controla o player (playerctl) e mostra o OSD
+  media-osd play|next|prev   controla o player (media-ctl) e mostra o OSD
   media-osd show             só mostra o OSD
   media-osd daemon           inicia o daemon (substitui um já rodando)
 
@@ -24,6 +24,8 @@ TIMEOUT_MS = 2000   # tempo visível
 MARGIN_X = 24
 MARGIN_Y = 44       # abaixo da polybar
 ART_SIZE = 72
+
+MEDIA_CTL = os.path.expanduser("~/bin/media-ctl")
 
 ENV = {**os.environ, "LC_ALL": "C"}
 
@@ -49,9 +51,9 @@ ACTIONS = {
     "up": lambda: set_volume(STEP),
     "down": lambda: set_volume(-STEP),
     "mute": lambda: sh("pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"),
-    "play": lambda: sh("playerctl", "play-pause"),
-    "next": lambda: sh("playerctl", "next"),
-    "prev": lambda: sh("playerctl", "previous"),
+    "play": lambda: sh(MEDIA_CTL, "play-pause"),
+    "next": lambda: sh(MEDIA_CTL, "next"),
+    "prev": lambda: sh(MEDIA_CTL, "previous"),
     "show": lambda: None,
 }
 
@@ -248,7 +250,7 @@ def daemon(show_now):
                 g = G_VOL_HIGH
             self.vol_icon.set_text(g)
 
-            meta = sh("playerctl", "metadata", "--format",
+            meta = sh(MEDIA_CTL, "metadata", "--format",
                       "{{status}}\n{{title}}\n{{artist}}\n{{mpris:artUrl}}")
             parts = meta.split("\n") if meta else []
             if len(parts) < 4 or parts[0] == "Stopped":
@@ -348,7 +350,7 @@ def daemon(show_now):
             self.refresh()
 
         def on_player(self, _b, cmd):
-            sh("playerctl", cmd)
+            sh(MEDIA_CTL, cmd)
             GLib.timeout_add(150, lambda: self.refresh() and False)
 
     provider = Gtk.CssProvider()

@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# media-ctl — playerctl que mira no player "certo".
+#
+# Uso: media-ctl <args do playerctl>   (ex.: play-pause, next, metadata ...)
+#
+# Ordem de escolha do player:
+#   1. o último que você controlou, se estiver tocando
+#   2. qualquer um tocando
+#   3. o último que você controlou, se ainda existir
+#   4. o padrão do playerctl (playerctld)
+# Assim um som de notificação (ex.: WhatsApp Web no Firefox) não "rouba" os
+# controles do Spotify.
+
+state="${XDG_RUNTIME_DIR:-/tmp}/media-ctl.player"
+last=$(cat "$state" 2>/dev/null)
+
+target=""
+playing=""
+while IFS=' ' read -r name status; do
+  [ "$status" = Playing ] || continue
+  [ "$name" = "$last" ] && { target=$name; break; }
+  [ -z "$playing" ] && playing=$name
+done < <(playerctl -a metadata --format '{{playerInstance}} {{status}}' 2>/dev/null)
+
+if [ -z "$target" ]; then
+  if [ -n "$playing" ]; then
+    target=$playing
+  elif [ -n "$last" ] && playerctl -l 2>/dev/null | grep -qxF "$last"; then
+    target=$last
+  fi
+fi
+
+case "$1" in
+  play|pause|play-pause|stop|next|previous)
+    [ -n "$target" ] || target=$(playerctl metadata --format "{{playerInstance}}" 2>/dev/null)
+    [ -n "$target" ] && echo "$target" > "$state" ;;
+esac
+
+if [ -n "$target" ]; then
+  exec playerctl -p "$target" "$@"
+else
+  exec playerctl "$@"
+fi

@@ -234,6 +234,8 @@ set $shims ~/.local/share/mise/shims
 
 # Notificações (tema em ~/.config/dunst/dunstrc)
 exec --no-startup-id dunst
+# Faz o playerctl mirar no player ativo mais recente (senão pega o primeiro da lista, ex.: Firefox pausado)
+exec --no-startup-id playerctld daemon
 # Luz quente à noite (horários em ~/.config/gammastep/config.ini)
 exec --no-startup-id gammastep
 # Alterna split h/v sozinho pela proporção da janela; morre no restart, por isso exec_always
